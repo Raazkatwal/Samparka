@@ -7,12 +7,16 @@ use App\Models\Message;
 use App\Models\User;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class ChatComponent extends Component
 {
+    use WithFileUploads;
     public $user;
     public $sender_id;
     public $receiver_id;
+    public $media;
+    public $voice;
     public $message = '';
     public $messages = [];
 
@@ -48,18 +52,35 @@ class ChatComponent extends Component
         $this->appendChatMessage($chatMessage);
     }
 
-    public function sendMessage(){
+    public function sendMessage()
+    {
         $chatMessage = new Message();
         $chatMessage->sender_id = $this->sender_id;
         $chatMessage->receiver_id = $this->receiver_id;
         $chatMessage->message = $this->message;
+
+        // Handle media upload
+        if ($this->media) {
+            $mediaPath = $this->media->store('media_messages', 'public');
+            $chatMessage->media_path = $mediaPath;
+        }
+
+        // Handle voice upload
+        if ($this->voice) {
+            $voicePath = $this->voice->store('voice_messages', 'public');
+            $chatMessage->voice_path = $voicePath;
+        }
+
         $chatMessage->save();
 
         $this->appendChatMessage($chatMessage);
         broadcast(new MessageSendEvent($chatMessage))->toOthers();
 
         $this->message = '';
+        $this->media = null;
+        $this->voice = null;
     }
+
 
     public function appendChatMessage($message){
         $this->messages[] = [
@@ -67,6 +88,8 @@ class ChatComponent extends Component
             'message' => $message->message,
             'sender' => $message->sender->name,
             'receiver' => $message->receiver->name,
+            'media_path' => $message->media_path,
+            'voice_path' => $message->voice_path,
         ];
     }
 }

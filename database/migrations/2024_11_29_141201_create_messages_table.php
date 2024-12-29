@@ -16,6 +16,8 @@ return new class extends Migration
             $table->foreignId('sender_id');
             $table->foreignId('receiver_id');
             $table->text('message');
+            $table->string('media_path')->nullable();
+            $table->string('voice_path')->nullable();
             $table->timestamps();
         });
     }
